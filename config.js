@@ -4,11 +4,14 @@
 // Separate origin (local dev, or FE on Netlify/CF Pages + BE on a Node host): set the full URL, and
 // add this site's origin to the backend's ALLOWED_ORIGINS.
 // For local dev these values are overridden by API_BASE_URL / PLAY_STORE_URL in the .env file (see serve.mjs).
+// This file is loaded directly by the browser, so it must NOT reference process/env —
+// those only exist in Node. The values below are plain fallbacks; serve.mjs (dev) and the
+// host's build step replace them by injecting the real values into these quoted strings.
 window.APP_CONFIG = {
   API: 'https://lcxwsdx2-3000.inc1.devtunnels.ms/',
   // Fallback Google Play link for "Get the App" buttons when the API has no playStoreUrl yet.
   PLAY_STORE: 'https://play.google.com/store',
-  // Sent as X-Api-Key on the upload-start call (POST /uploads). Empty here on purpose — set in .env (dev) or the host's env.
+  // Sent as X-Api-Key on the upload endpoints. Empty here on purpose — set in .env (dev) or the host's env.
   API_KEY: '',
 };
 

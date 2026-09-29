@@ -306,7 +306,31 @@ async function loadTop() {
 
 // ---------- videos table ----------
 
-async function loadFiles({ reset = false, keepCount = false } = {}) {
+let filesBusy = false;
+let filesQueued = null; // opts of the last request that arrived while busy (coalesced, not dropped)
+
+async function loadFiles(opts = {}) {
+  // One table request at a time: a search/sort/refresh that arrives mid-flight is queued
+  // and run once the current call finishes (always with the latest opts), so responses
+  // can never interleave and the server sees at most one pending /files call.
+  if (filesBusy) {
+    filesQueued = opts;
+    return;
+  }
+  filesBusy = true;
+  try {
+    await loadFilesInner(opts);
+    while (filesQueued) {
+      const next = filesQueued;
+      filesQueued = null;
+      await loadFilesInner(next);
+    }
+  } finally {
+    filesBusy = false;
+  }
+}
+
+async function loadFilesInner({ reset = false, keepCount = false }) {
   const offset = reset ? 0 : state.nextOffset ?? 0;
   const limit = keepCount ? Math.min(100, Math.max(50, state.loaded)) : 50;
   const params = new URLSearchParams({ sort: state.sort, q: state.q, offset, limit });
@@ -375,13 +399,18 @@ $('[data-sort]').addEventListener('change', (e) => {
   state.sort = e.target.value;
   loadFiles({ reset: true });
 });
+// Debounced search: typing fires no request until the input has been idle for 450ms,
+// and an identical query never re-triggers a load (guards the trailing timer + Enter key).
+const SEARCH_DEBOUNCE_MS = 450;
 let searchTimer;
 $('[data-search]').addEventListener('input', (e) => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
-    state.q = e.target.value.trim();
+    const q = e.target.value.trim();
+    if (q === state.q) return;
+    state.q = q;
     loadFiles({ reset: true });
-  }, 250);
+  }, SEARCH_DEBOUNCE_MS);
 });
 
 // ---------- one video (drawer) ----------

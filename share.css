@@ -145,8 +145,8 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 48px;
-  max-height: 48px;
+  min-height: 60px;
+  max-height: 60px;
   padding: 4px 12px;
   border-radius: 999px;
   border: 1px solid var(--divider);

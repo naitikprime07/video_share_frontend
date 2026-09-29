@@ -390,7 +390,10 @@ svg {
 
 .content {
   padding: 28px 32px 48px;
-  max-width: 1240px;
+  min-width: 0;
+  /* Fill the main column edge-to-edge (was capped at 1240px, which left dead space on wide screens). */
+  max-width: none;
+  margin-inline: auto;
 }
 
 .mobile-only {
